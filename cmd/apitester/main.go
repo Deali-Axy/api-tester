@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api-tester/pkg/api/tester"
 	"context"
 	"fmt"
 	"github.com/urfave/cli/v3"
@@ -25,6 +26,15 @@ func main() {
 					fmt.Printf("Run mode: %s\n", c.Name)
 					fmt.Printf("Configuration file path: %s\n", configFile)
 					fmt.Printf("Output path: %s\n", outputFile)
+
+					parser := tester.Parser{}
+					if _, err := parser.LoadFromFile(configFile); err != nil {
+						return err
+					}
+
+					if err := parser.SaveConfig(outputFile); err != nil {
+						return err
+					}
 
 					return nil
 				},
@@ -66,6 +76,14 @@ func main() {
 					&cli.StringFlag{
 						Name:  "o",
 						Usage: "Output path",
+					},
+					&cli.DurationFlag{
+						Name:  "timeout",
+						Usage: "Set request timeout",
+					},
+					&cli.StringFlag{
+						Name:  "proxy",
+						Usage: "Set proxy url",
 					},
 					&cli.IntFlag{
 						Name:  "t",
