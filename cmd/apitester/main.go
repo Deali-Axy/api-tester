@@ -7,9 +7,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/nleeper/goment"
 	"github.com/urfave/cli/v3"
 	"go.uber.org/zap"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -93,7 +95,7 @@ func main() {
 				Usage:   "Run Apis test",
 				Action: func(ctx context.Context, c *cli.Command) error {
 					configFile := c.String("c")
-					outputFile := c.String("o")
+					outputPath := c.String("o")
 					baseUrl := c.String("base-url")
 					threads := c.Int("t")
 					proxy := c.String("proxy")
@@ -101,7 +103,7 @@ func main() {
 
 					logger.Debugf("Run mode: %s", c.Name)
 					logger.Debugf("Configuration file path: %s", configFile)
-					logger.Debugf("Output path: %s", outputFile)
+					logger.Debugf("Output path: %s", outputPath)
 					logger.Debugf("Threads count: %d", threads)
 
 					t := tester.Tester{
@@ -125,8 +127,12 @@ func main() {
 						return err
 					}
 
+					g, _ := goment.New()
+					timeStr := g.Format("YYYY-MM-DD_HH-mm-ss-x")
 					e := exporter.Exporter{}
-					if err := e.ToExcel(reports, outputFile); err != nil {
+					if err := e.ToExcel(reports,
+						filepath.Join(outputPath, fmt.Sprintf("reports_%s.xlsx", timeStr)),
+					); err != nil {
 						logger.Errorln(err)
 						return err
 					}
@@ -141,7 +147,7 @@ func main() {
 					},
 					&cli.StringFlag{
 						Name:     "o",
-						Usage:    "Output path",
+						Usage:    "Output folder path",
 						Required: true,
 					},
 					&cli.StringFlag{

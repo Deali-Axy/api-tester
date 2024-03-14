@@ -117,7 +117,7 @@ func (c *Tester) testApisSync(apiInfos *[]ApiInfo) ([]*Report, error) {
 		// 调用 Tester 的 Request 方法测试接口
 		report, err := c.Request(info.Name, info.Path, info.Method, info.Params, info.Body)
 		if err != nil {
-			c.Logger.Errorf("接口 %s 测试失败：%v", info.Name, err)
+			c.Logger.Warnf("接口 %s 测试失败：%v", info.Name, err)
 		}
 
 		// 将测试报告保存到数组中
@@ -160,7 +160,7 @@ func (c *Tester) testApisParallel(apiInfos *[]ApiInfo, concurrencyLimit int) ([]
 			// 调用 Tester 的 Request 方法测试接口
 			report, err := c.Request(apiInfo.Name, apiInfo.Path, apiInfo.Method, apiInfo.Params, apiInfo.Body)
 			if err != nil {
-				c.Logger.Errorf("接口 %s 测试失败：%v", apiInfo.Name, err)
+				c.Logger.Warnf("接口 %s 测试失败：%v", apiInfo.Name, err)
 			}
 
 			// 将测试报告发送到管道
