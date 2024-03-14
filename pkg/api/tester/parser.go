@@ -2,7 +2,7 @@ package tester
 
 import (
 	"api-tester/pkg/utilities/goext"
-	"api-tester/pkg/utilities/goext/strext"
+	"api-tester/pkg/utilities/goext/str-ext"
 	"encoding/json"
 	"go.uber.org/zap"
 	"os"
@@ -20,6 +20,7 @@ func (c *Parser) LoadFromFile(filePath string) ([]ApiInfo, error) {
 	// 解析 OpenAPI 文档
 	swagger, err := openapi3.NewLoader().LoadFromFile(filePath)
 	if err != nil {
+		c.Logger.Error(err)
 		return nil, err
 	}
 
@@ -81,11 +82,13 @@ func (c *Parser) SaveConfig(filePath string) error {
 	// 将测试配置转换为 JSON 格式
 	configJSON, err := json.MarshalIndent(c.apiInfos, "", "    ")
 	if err != nil {
+		c.Logger.Error(err)
 		return err
 	}
 
 	// 写入 JSON 文件
 	if err = os.WriteFile(filePath, configJSON, os.ModePerm); err != nil {
+		c.Logger.Error(err)
 		return err
 	}
 

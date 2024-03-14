@@ -6,30 +6,57 @@ import (
 	"context"
 	"fmt"
 	"github.com/urfave/cli/v3"
+	"go.uber.org/zap"
 	"os"
-	"path/filepath"
 )
 
 func main() {
-	logger := tlog.BuildLogger(filepath.Join("logs", "test.log"))
+	var logger *zap.SugaredLogger
 
-	// 创建一个新的CLI应用程序
 	app := &cli.Command{
 		Name:        "API Tester",
 		Usage:       "Welcome to API Testing Tool",
 		Description: "This tool is developed in Go language and provides functionalities such as parsing OpenApi documents, automated interface testing, and generating test reports. You can use this tool to quickly and conveniently conduct API testing and generate detailed test reports for further analysis.",
+		Before: func(ctx context.Context, command *cli.Command) error {
+			logToFile := command.Bool("l")
+			logPath := command.String("p")
+			var err error
+			logger, err = tlog.BuildLogger(&tlog.Options{
+				WriteToFile: logToFile,
+				Folder:      logPath,
+			})
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "l",
+				Aliases: []string{"log-to-file"},
+				Usage:   "write log to file",
+				Value:   false,
+			},
+			&cli.StringFlag{
+				Name:    "p",
+				Aliases: []string{"log-path"},
+				Usage:   "The path to store log files",
+				Value:   "logs",
+			},
+		},
 		Commands: []*cli.Command{
 			{
-				Name:    "openapi",
-				Aliases: []string{"swagger"},
+				Name:    "parse",
+				Aliases: []string{"openapi", "swagger"},
 				Usage:   "Parse OpenApi document and generate apis configuration",
 				Action: func(ctx context.Context, c *cli.Command) error {
 					configFile := c.String("c")
 					outputFile := c.String("o")
 
-					fmt.Printf("Run mode: %s\n", c.Name)
-					fmt.Printf("Configuration file path: %s\n", configFile)
-					fmt.Printf("Output path: %s\n", outputFile)
+					logger.Debugf("Run mode: %s", c.Name)
+					logger.Debugf("Configuration file path: %s", configFile)
+					logger.Debugf("Output path: %s", outputFile)
 
 					parser := tester.Parser{
 						Logger: logger,
@@ -101,9 +128,7 @@ func main() {
 		},
 	}
 
-	// 运行CLI应用程序
-	err := app.Run(context.Background(), os.Args)
-	if err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		fmt.Println(err)
 	}
 }
