@@ -2,9 +2,11 @@ package main
 
 import (
 	"api-tester/pkg/api/tester"
+	"api-tester/pkg/utilities/exporter"
 	tlog "api-tester/pkg/utilities/logger"
 	"context"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"github.com/urfave/cli/v3"
 	"go.uber.org/zap"
 	"os"
@@ -92,23 +94,59 @@ func main() {
 				Action: func(ctx context.Context, c *cli.Command) error {
 					configFile := c.String("c")
 					outputFile := c.String("o")
+					baseUrl := c.String("base-url")
 					threads := c.Int("t")
+					proxy := c.String("proxy")
+					timeout := c.Duration("timeout")
 
-					fmt.Printf("Run mode: %s\n", c.Name)
-					fmt.Printf("Configuration file path: %s\n", configFile)
-					fmt.Printf("Output path: %s\n", outputFile)
-					fmt.Printf("Threads count: %d\n", threads)
+					logger.Debugf("Run mode: %s", c.Name)
+					logger.Debugf("Configuration file path: %s", configFile)
+					logger.Debugf("Output path: %s", outputFile)
+					logger.Debugf("Threads count: %d", threads)
+
+					t := tester.Tester{
+						Logger:      logger,
+						RestyClient: resty.New(),
+						BaseURL:     baseUrl,
+					}
+
+					t.RestyClient.SetProxy(proxy)
+					t.RestyClient.SetTimeout(timeout)
+
+					apis, err := tester.ReadConfig(configFile)
+					if err != nil {
+						logger.Errorln(err)
+						return err
+					}
+
+					reports, err := t.TestApis(apis, int(threads))
+					if err != nil {
+						logger.Errorln(err)
+						return err
+					}
+
+					e := exporter.Exporter{}
+					if err := e.ToExcel(reports, outputFile); err != nil {
+						logger.Errorln(err)
+						return err
+					}
 
 					return nil
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
-						Name:  "c",
-						Usage: "Configuration file path",
+						Name:     "c",
+						Usage:    "Configuration file path",
+						Required: true,
 					},
 					&cli.StringFlag{
-						Name:  "o",
-						Usage: "Output path",
+						Name:     "o",
+						Usage:    "Output path",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "base-url",
+						Required: true,
 					},
 					&cli.DurationFlag{
 						Name:  "timeout",

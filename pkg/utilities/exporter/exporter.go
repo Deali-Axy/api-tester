@@ -58,7 +58,9 @@ func (e *Exporter) ToExcel(testReports []*tester.Report, filename string) error 
 		_ = f.SetCellValue(sheet, fmt.Sprintf("A%d", row), report.ApiName)
 		_ = f.SetCellValue(sheet, fmt.Sprintf("B%d", row), report.ApiPath)
 		_ = f.SetCellValue(sheet, fmt.Sprintf("C%d", row), goext.If(report.IsPassed, "是", "否"))
-		_ = f.SetCellValue(sheet, fmt.Sprintf("D%d", row), report.Response.StatusCode())
+		if report.Response != nil {
+			_ = f.SetCellValue(sheet, fmt.Sprintf("D%d", row), report.Response.StatusCode())
+		}
 		_ = f.SetCellValue(sheet, fmt.Sprintf("E%d", row), report.Elapsed.Seconds())
 	}
 
