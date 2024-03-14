@@ -2,13 +2,17 @@ package main
 
 import (
 	"api-tester/pkg/api/tester"
+	tlog "api-tester/pkg/utilities/logger"
 	"context"
 	"fmt"
 	"github.com/urfave/cli/v3"
 	"os"
+	"path/filepath"
 )
 
 func main() {
+	logger := tlog.BuildLogger(filepath.Join("logs", "test.log"))
+
 	// 创建一个新的CLI应用程序
 	app := &cli.Command{
 		Name:        "API Tester",
@@ -27,7 +31,9 @@ func main() {
 					fmt.Printf("Configuration file path: %s\n", configFile)
 					fmt.Printf("Output path: %s\n", outputFile)
 
-					parser := tester.Parser{}
+					parser := tester.Parser{
+						Logger: logger,
+					}
 					if _, err := parser.LoadFromFile(configFile); err != nil {
 						return err
 					}

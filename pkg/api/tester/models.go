@@ -41,9 +41,11 @@ type Report struct {
 
 // ApiInfo 接口信息
 type ApiInfo struct {
-	ApiName     string            `json:"apiName"`
-	ApiPath     string            `json:"apiPath"`
+	Id          string            `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Path        string            `json:"path"`
 	Method      string            `json:"method"`
-	QueryParams map[string]string `json:"queryParams"`
+	Params      map[string]string `json:"params"`
 	Body        map[string]string `json:"body"`
 }

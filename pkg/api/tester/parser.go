@@ -2,15 +2,16 @@ package tester
 
 import (
 	"api-tester/pkg/utilities/goext"
+	"api-tester/pkg/utilities/goext/strext"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"go.uber.org/zap"
 	"os"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
 type Parser struct {
+	Logger   *zap.SugaredLogger
 	apiInfos []ApiInfo
 }
 
@@ -32,7 +33,11 @@ func (c *Parser) LoadFromFile(filePath string) ([]ApiInfo, error) {
 			queryParams := make(map[string]string)
 			for _, param := range operation.Parameters {
 				if param.Value.In == "query" {
-					queryParams[param.Value.Name] = goext.If(param.Value.Schema != nil, param.Value.Schema.Value.Type, "")
+					if param.Value.Schema != nil {
+						queryParams[param.Value.Name] = param.Value.Schema.Value.Type
+					} else {
+						queryParams[param.Value.Name] = ""
+					}
 				}
 			}
 
@@ -50,10 +55,15 @@ func (c *Parser) LoadFromFile(filePath string) ([]ApiInfo, error) {
 
 			// 构造 ApiInfo 结构体
 			apiInfo := ApiInfo{
-				ApiName:     operation.OperationID,
-				ApiPath:     path,
+				Id: operation.OperationID,
+				Name: goext.If(
+					strext.IsNullOrWhiteSpace(operation.Summary),
+					operation.OperationID, operation.Summary,
+				),
+				Description: operation.Description,
+				Path:        path,
 				Method:      method,
-				QueryParams: queryParams,
+				Params:      queryParams,
 				Body:        bodyParams,
 			}
 
@@ -75,11 +85,10 @@ func (c *Parser) SaveConfig(filePath string) error {
 	}
 
 	// 写入 JSON 文件
-	err = ioutil.WriteFile(filePath, configJSON, os.ModePerm)
-	if err != nil {
+	if err = os.WriteFile(filePath, configJSON, os.ModePerm); err != nil {
 		return err
 	}
 
-	fmt.Println("Config saved successfully!")
+	c.Logger.Infoln("Config saved successfully!")
 	return nil
 }
