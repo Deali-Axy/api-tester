@@ -5,6 +5,7 @@ import (
 	"api-tester/pkg/utilities/exporter"
 	tlog "api-tester/pkg/utilities/logger"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/nleeper/goment"
@@ -100,6 +101,7 @@ func main() {
 					threads := c.Int("t")
 					proxy := c.String("proxy")
 					timeout := c.Duration("timeout")
+					authToken := c.String("auth-token")
 
 					logger.Debugf("Run mode: %s", c.Name)
 					logger.Debugf("Configuration file path: %s", configFile)
@@ -112,8 +114,16 @@ func main() {
 						BaseURL:     baseUrl,
 					}
 
-					t.RestyClient.SetProxy(proxy)
+					t.RestyClient.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+
+					if len(proxy) > 0 {
+						t.RestyClient.SetProxy(proxy)
+					}
 					t.RestyClient.SetTimeout(timeout)
+
+					if len(authToken) > 0 {
+						t.AuthToken = authToken
+					}
 
 					apis, err := tester.ReadConfig(configFile)
 					if err != nil {
@@ -166,6 +176,10 @@ func main() {
 						Name:  "t",
 						Usage: "Threads count",
 						Value: 1,
+					},
+					&cli.StringFlag{
+						Name:  "auth-token",
+						Usage: "Set auth token",
 					},
 				},
 			},

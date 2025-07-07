@@ -78,7 +78,7 @@ func (c *Tester) Request(apiName string, apiPath string, method string,
 	report.Response = resp
 
 	// 打印响应时间
-	c.Logger.Infof("接口 %s 的响应时间: %s", apiPath, elapsed)
+	c.Logger.Infof("接口 %s 的响应时间: %s", c.BaseURL+apiPath, elapsed)
 
 	// 解析响应
 	var data ApiResponse
